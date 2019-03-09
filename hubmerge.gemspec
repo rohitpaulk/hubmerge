@@ -4,7 +4,7 @@ require "hubmerge/version"
 
 Gem::Specification.new do |spec|
   spec.name          = "hubmerge"
-  spec.version       = Hubmerge::VERSION
+  spec.version       = HubMerge::VERSION
   spec.authors       = ["Paul Kuruvilla"]
   spec.email         = ["rohitpaulk@gmail.com"]
 

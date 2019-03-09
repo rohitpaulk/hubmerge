@@ -4,6 +4,10 @@ require "tty-spinner"
 
 require "hubmerge/version"
 
+require "hubmerge/options"
+require "hubmerge/prompts"
+require "hubmerge/merger"
+
 module HubMerge
   class Executable
     def run(env, argv)

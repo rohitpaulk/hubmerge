@@ -1,20 +1,52 @@
 # HubMerge
 
-HubMerge helps you merge multiple GitHub PRs with a friendly
+HubMerge helps you merge multiple GitHub Pull Requests with a friendly
 [TUI](https://en.wikipedia.org/wiki/Text-based_user_interface).
 
-
 ## Installation
-
-Add this line to your application's Gemfile:
 
 ```ruby
 gem install hubmerge
 ```
 
+To authenticate with GitHub, HubMerge expects a `GITHUB_TOKEN` environment
+variable to be set. Visit [Github > Settings > Personal Access
+Tokens](https://github.com/settings/tokens) to create one. If this is not set,
+HubMerge will prompt for the value.
+
 ## Usage
 
-    $ hubmerge --help
+HubMerge accepts parameters interactively. Just run `hubmerge` to get started.
+
+    $ hubmerge
+
+You can provide parameters via the CLI too (good to store in your shell history if you do this often!)
+
+    $ hubmerge --repo "rails/rails" --query "author:app/dependabot"
+
+By default, `hubmerge` will always ask for confirmation before merging PRs. If you want to avoid this, use the `--yes` flag. This is useful if you're running `hubmerge` as part of a script.
+
+## Advanced Usage
+
+HubMerge's primary use case is to merge PRs in a single repository. To support
+advanced use cases, HubMerge allows using any arbitrary Github [search
+filter](https://help.github.com/en/articles/searching-issues-and-pull-requests).
+
+When the `--repo` flag is omitted, the query is directly passed in as a search filter (prefixed with `is:pr is:open`). One can now embed repo/org/user filters into the search query itself.
+
+_Note_: This isn't supported in interactive mode, only via the CLI.
+
+**Multiple repositories**
+
+To merge PRs across multiple repositories:
+
+    $ hubmerge --query "repo:rails/rails repo:sinatra/sinatra author:app/dependabot"
+
+**Organization wide merges**
+
+To merge PRs across an entire org:
+
+    $ hubmerge --query "org:rails author:app/dependabot"
 
 ## Development
 

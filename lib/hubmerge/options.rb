@@ -20,7 +20,7 @@ module HubMerge
 
     def self.parse(argv)
       parsed = {}
-      opt_parser = OptionParser
+      opt_parser = OptionParser.new
 
       all.each do |key, params|
         opt_parser.on(

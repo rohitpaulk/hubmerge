@@ -14,7 +14,18 @@ class DummySpinner
 
   def with_child(text)
     yield
-  rescue SpinnerError
+  rescue HubMerge::SpinnerError
+  end
+end
+
+class FakeMerger
+  attr_reader :calls
+  [:approve_if_not_approved, :check_mergeability, :merge].each do |key|
+    define_method(key) do |*args|
+      @calls ||= []
+      @calls << key
+      true
+    end
   end
 end
 
@@ -29,11 +40,11 @@ class FakePrompts
   def say(text)
   end
 
-  [:github_token, :repo, :query].each do |key|
+  [:github_token, :repo, :query, :pull_requests_to_merge].each do |key|
     define_method(key) do |*args|
       @prompts << key
       if @prompts_to_answer.key?(key)
-        @prompts_to_answer.pop(key)
+        @prompts_to_answer.delete(key)
       else
         raise PromptInterrupt
       end
@@ -59,6 +70,15 @@ class FakeGithubClient
   end
 end
 
+class FakePR
+  attr_reader :number
+
+  def initialize(repo, number)
+    @repo = repo
+    @number = number
+  end
+end
+
 class ExecutableTest < Minitest::Test
   def test_no_github_token
     completed = run_exe(["--repo", "rails/rails"], env: {})
@@ -79,22 +99,70 @@ class ExecutableTest < Minitest::Test
   end
 
   def test_no_prs
-    fake_gh = FakeGithubClient.new([])
-    exit_code = run_exe(["--repo", "rails/rails", "--query", "in:title hey"], github_client: fake_gh)
+    gh_client = FakeGithubClient.new([])
+    exit_code = run_exe(["--repo", "rails/rails", "--query", "in:title hey"], github_client: gh_client)
     assert_equal 1, exit_code
   end
+
+  def test_no_selected_prs
+    exit_code = run_exe(
+      ["-r", "rails/rails", "-q", "in:title hey"],
+      prompt_answers: {
+        pull_requests_to_merge: [],
+      }
+    )
+    assert_equal 1, exit_code
+  end
+
+  def test_selected_prs_no_confirm
+    exit_code = run_exe(["-r", "rails/rails", "-q", "in:title hey", "-y"])
+    assert_equal 0, exit_code
+    assert_equal 3, @fake_merger.calls.count
+  end
+
+  def test_selected_prs_confirm
+    exit_code = run_exe(
+      ["-r", "rails/rails", "-q", "in:title hey"],
+      prompt_answers: {
+        pull_requests_to_merge: [FakePR.new("repo", "number")],
+      }
+    )
+    assert_equal 0, exit_code
+    # Mergeability, Approve, Merge
+    assert_equal 3, @fake_merger.calls.count
+  end
+
+  def test_multiple_prs
+    exit_code = run_exe(
+      ["-r", "rails/rails", "-q", "in:title hey", "-y"],
+      github_client: FakeGithubClient.new([
+        FakePR.new("repo", "number"),
+        FakePR.new("repo", "number"),
+      ])
+    )
+    assert_equal 0, exit_code
+    # 2 x (Mergeability, Approve, Merge)
+    assert_equal 6, @fake_merger.calls.count
+  end
+
+  private
 
   def assert_prompt(*keys)
     assert_equal keys, @fake_prompts.prompts
   end
 
-  def run_exe(argv, env: nil, prompt_answers: {}, github_client: {})
-    @fake_prompts = FakePrompts.new({})
+  def run_exe(argv, env: nil, prompt_answers: {}, github_client: nil)
     env = {"GITHUB_TOKEN" => "dummy"} if env.nil?
+    if github_client.nil?
+      github_client = FakeGithubClient.new([FakePR.new("test", "123")])
+    end
+    @fake_prompts = FakePrompts.new(prompt_answers)
+    @fake_merger = FakeMerger.new
     HubMerge::Executable.new(
       prompts: @fake_prompts,
       github_client: github_client,
-      spinner: DummySpinner.new
+      spinner: DummySpinner.new,
+      merger: @fake_merger
     ).run(env, argv)
   rescue PromptInterrupt
     nil

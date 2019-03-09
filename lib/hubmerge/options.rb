@@ -15,6 +15,13 @@ module HubMerge
           type: String,
           description: "GitHub search query to run to find PRs (example: 'author:app/dependabot')",
         },
+
+        merge_without_confirmation: {
+          short_switch: "-y",
+          long_switch: "--yes",
+          type: :flag,
+          description: "Merge without confirmation from user (default: false)",
+        },
       }
     end
 
@@ -23,12 +30,20 @@ module HubMerge
       opt_parser = OptionParser.new
 
       all.each do |key, params|
-        opt_parser.on(
-          params[:short_switch],
-          params[:long_switch],
-          params[:type],
-          params[:description]
-        ) { |v| parsed[key] = v }
+        if params[:type] == :flag
+          opt_parser.on(
+            params[:short_switch],
+            params[:long_switch],
+            params[:description]
+          ) { |v| parsed[key] = v }
+        else
+          opt_parser.on(
+            params[:short_switch],
+            params[:long_switch],
+            params[:type],
+            params[:description]
+          ) { |v| parsed[key] = v }
+        end
       end
 
       opt_parser.parse(argv)

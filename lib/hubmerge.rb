@@ -12,16 +12,16 @@ require "hubmerge/spinner"
 module HubMerge
   class Executable
     def initialize(opts = {})
+      # Overrides only used in tests
       @spinner = opts[:spinner] || Spinner.new
       @prompts = opts[:prompts] || Prompts
       @github_client = opts[:github_client]
+      @merger = opts[:merger] || Merger
     end
 
     def run(env, argv)
       check_or_prompt_github_token(env)
       opts = Options.parse(argv)
-
-      # help?
 
       query = check_or_prompt_search_query(opts)
       prs = search_pull_requests(query)
@@ -30,14 +30,19 @@ module HubMerge
         return 1
       end
 
-      prs_to_merge = @prompts.pull_requests_to_merge(prs)
+      prs_to_merge = if opts[:merge_without_confirmation]
+        prs
+      else
+        @prompts.pull_requests_to_merge(prs)
+      end
+
       if prs_to_merge.empty?
         @prompts.say("No pull requests selected, aborting")
         return 1
+      else
+        merge_pull_requests(prs_to_merge)
+        return 0
       end
-
-      merge_pull_requests(prs_to_merge)
-      0
     end
 
     private
@@ -48,7 +53,7 @@ module HubMerge
         @spinner.with_parent("[:spinner] PR ##{pr.number} (#{index + 1}/#{total})") do
           mergeable = @spinner.with_child("[:spinner] Checking mergeability") {
             begin
-              Merger.check_mergeability(gh_client, pr)
+              @merger.check_mergeability(github_client, pr)
             rescue UnmergeableError => e
               raise SpinnerError("(Mergability: #{e})")
             end
@@ -57,11 +62,11 @@ module HubMerge
           next unless mergeable
 
           @spinner.with_child("[:spinner] Approving") do
-            Merger.approve_if_not_approved(gh_client, pr)
+            @merger.approve_if_not_approved(github_client, pr)
           end
 
           @spinner.with_child("[:spinner] Merging") do
-            Merger.merge(gh_client, pr)
+            @merger.merge(github_client, pr)
           end
         end
       end

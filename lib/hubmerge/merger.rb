@@ -44,11 +44,11 @@ module HubMerge
 
     private
 
-    def repo_from_pr(pr)
+    def self.repo_from_pr(pr)
       pr.base.repo.full_name
     end
 
-    def with_retries(n_tries, delay)
+    def self.with_retries(n_tries, delay)
       n_tries.times do
         return yield
       rescue RetryError

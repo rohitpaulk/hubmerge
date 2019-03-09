@@ -2,6 +2,8 @@ require "octokit"
 require "tty-prompt"
 require "tty-spinner"
 
+require "hubmerge/version"
+
 module HubMerge
   class Executable
     def run(env, argv)

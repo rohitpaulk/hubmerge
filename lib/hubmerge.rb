@@ -10,6 +10,10 @@ require "hubmerge/merger"
 
 module HubMerge
   class Executable
+    def initialize(opts = {})
+      @spinner = opts[:spinner] || Spinner.new
+    end
+
     def run(env, argv)
       check_or_prompt_github_token(env)
       opts = Options.parse(argv)
@@ -32,36 +36,32 @@ module HubMerge
     def merge_pull_requests(prs_to_merge)
       total = prs_to_merge.count
       prs_to_merge.each_with_index do |pr, index|
-        spinners = TTY::Spinner::Multi.new("[:spinner] PR ##{pr.number} (#{index + 1}/#{total})")
-        mergeability_spinner = spinners.register("[:spinner] Checking mergeability")
-        review_spinner = spinners.register("[:spinner] Approving")
-        merge_spinner = spinners.register("[:spinner] Merging")
+        @spinner.with_parent("[:spinner] PR ##{pr.number} (#{index + 1}/#{total})") do
+          mergeable = @spinner.with_child("[:spinner] Checking mergeability") {
+            begin
+              Merger.check_mergeability(gh_client, pr)
+            rescue UnmergeableError => e
+              raise SpinnerError("(Mergability: #{e})")
+            end
+          }
 
-        mergeability_spinner.auto_spin
-        mergeable, error = Merger.check_mergeability(gh_client, pr)
-        if mergeable
-          mergeability_spinner.success
-        else
-          mergeability_spinner.error("(Mergability: #{error})")
-          next
+          next unless mergeable
+
+          @spinner.with_child("[:spinner] Approving") do
+            Merger.approve_if_not_approved(gh_client, pr)
+          end
+
+          @spinner.with_child("[:spinner] Merging") do
+            Merger.merge(gh_client, pr)
+          end
         end
-
-        review_spinner.auto_spin
-        Merger.approve_if_not_approved(gh_client, pr)
-        review_spinner.success
-
-        merge_spinner.auto_spin
-        Merger.merge(gh_client, pr)
-        merge_spinner.success
       end
     end
 
     def search_pull_requests(query)
-      spinner = TTY::Spinner.new("[:spinner] Searching for PRs...")
-      spinner.auto_spin
-      github_client.search_issues("search_query").items
-    ensure
-      spinner.stop
+      @spinner.with_spinner("[:spinner] Searching for PRs...") do
+        github_client.search_issues("search_query").items
+      end
     end
 
     def check_or_prompt_search_query(opts)

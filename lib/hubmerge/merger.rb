@@ -2,6 +2,9 @@ module HubMerge
   class RetryError < RuntimeError
   end
 
+  class UnmergeableError < RuntimeError
+  end
+
   class Merger
     MERGEABILITY_RETRY_COUNT = 5
     MERGEABILITY_RETRY_DELAY = 5
@@ -14,18 +17,22 @@ module HubMerge
       end
     end
 
-    # Returns [is_mergeable, reason_if_not_mergeable]
+    # Throws UnmergeableError if not mergeable.
+    # Returns true if mergeable.
+    #
+    # Yes, this interface is weird. Makes it easier to deal with
+    # spinners.
     def self.check_mergeability(gh_client, pr)
       repo = repo_from_pr(pr)
 
       with_retries(MERGEABILITY_RETRY_COUNT, MERGEABILITY_RETRY_DELAY) do
         pr = gh_client.pull_request(repo, pr.number)
         if pr.mergeable
-          return [true, nil]
+          return true
         elsif pr.mergeable_state == "unknown"
           raise RetryError
         else
-          return [false, pr.mergeable_state]
+          raise UnmergeableError.new(pr.mergeable_state)
         end
       end
     end

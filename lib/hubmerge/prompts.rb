@@ -39,5 +39,9 @@ module HubMerge
         filter: true
       )
     end
+
+    def self.say(text)
+      puts text
+    end
   end
 end

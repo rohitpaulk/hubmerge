@@ -7,11 +7,14 @@ require "hubmerge/version"
 require "hubmerge/options"
 require "hubmerge/prompts"
 require "hubmerge/merger"
+require "hubmerge/spinner"
 
 module HubMerge
   class Executable
     def initialize(opts = {})
       @spinner = opts[:spinner] || Spinner.new
+      @prompts = opts[:prompts] || Prompts
+      @github_client = opts[:github_client]
     end
 
     def run(env, argv)
@@ -22,13 +25,19 @@ module HubMerge
 
       query = check_or_prompt_search_query(opts)
       prs = search_pull_requests(query)
-      prs_to_merge = Prompts.pull_requests_to_merge(prs)
+      if prs.empty?
+        @prompts.say("No pull requests found. Maybe try refining your search query?")
+        return 1
+      end
+
+      prs_to_merge = @prompts.pull_requests_to_merge(prs)
       if prs_to_merge.empty?
-        puts "No pull requests selected, aborting"
-        exit 1
+        @prompts.say("No pull requests selected, aborting")
+        return 1
       end
 
       merge_pull_requests(prs_to_merge)
+      0
     end
 
     private
@@ -60,7 +69,7 @@ module HubMerge
 
     def search_pull_requests(query)
       @spinner.with_spinner("[:spinner] Searching for PRs...") do
-        github_client.search_issues("search_query").items
+        github_client.search_issues(query).items
       end
     end
 
@@ -70,8 +79,8 @@ module HubMerge
       elsif opts.key?(:query)
         "is:pr is:open #{opts[:query]}"
       else
-        repo = Prompts.repo(github_client)
-        query = Prompts.query
+        repo = opts[:repo] || @prompts.repo(github_client)
+        query = @prompts.query
         "is:pr is:open repo:#{repo} #{query}"
       end
     end
@@ -80,7 +89,7 @@ module HubMerge
       @github_token = if env.key?("GITHUB_TOKEN")
         env.fetch("GITHUB_TOKEN")
       else
-        Prompts.github_token
+        @prompts.github_token
       end
     end
 

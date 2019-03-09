@@ -28,5 +28,5 @@ Gem::Specification.new do |spec|
 
   spec.add_dependency "octokit",  "~> 4.0"
   spec.add_dependency "tty-prompt", "~> 0.18"
-  spec.add_dependency "tty-spinner", "~> 0.19"
+  spec.add_dependency "tty-spinner", "~> 0.9"
 end

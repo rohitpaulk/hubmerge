@@ -9,7 +9,7 @@ module HubMerge
     def self.query
       TTY::Prompt.new.ask(
         "Enter a GitHub search query to find PRs (example: 'in:title automerge')",
-        default: "author: app/dependabot"
+        default: "author:app/dependabot"
       )
     end
 

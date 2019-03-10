@@ -1,0 +1,3 @@
+#!/usr/bin/env ruby
+require "hubmerge"
+exit(HubMerge::Executable.run(ENV, ARGV))

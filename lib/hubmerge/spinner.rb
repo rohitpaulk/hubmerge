@@ -27,11 +27,11 @@ module HubMerge
 
       spinner = @active_parent_spinner.register(text)
       spinner.auto_spin
-      yield
+      result = yield
+      spinner.success
+      result
     rescue SpinnerError => e
       spinner.error(e.to_s)
-    else
-      spinner.stop
     end
 
     def ensure_active_parent!

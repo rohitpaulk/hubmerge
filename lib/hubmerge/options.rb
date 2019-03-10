@@ -1,3 +1,5 @@
+require "optparse"
+
 module HubMerge
   class Options
     def self.all

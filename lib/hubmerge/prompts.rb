@@ -31,7 +31,7 @@ module HubMerge
         }
       }
 
-      prompt.multi_select(
+      TTY::Prompt.new.multi_select(
         "Which of these pull requests do you want to merge? (SPACE to select, ENTER to finalize)",
         choices,
         echo: false,

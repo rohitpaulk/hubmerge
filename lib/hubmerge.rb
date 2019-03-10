@@ -50,6 +50,7 @@ module HubMerge
     def merge_pull_requests(prs_to_merge)
       total = prs_to_merge.count
       prs_to_merge.each_with_index do |pr, index|
+        mergeable = false
         @spinner.with_parent("[:spinner] PR ##{pr.number} (#{index + 1}/#{total})") do
           mergeable = @spinner.with_child("[:spinner] Checking mergeability") {
             begin
@@ -57,6 +58,8 @@ module HubMerge
             rescue UnmergeableError => e
               raise SpinnerError("(Mergability: #{e})")
             end
+
+            true
           }
 
           next unless mergeable

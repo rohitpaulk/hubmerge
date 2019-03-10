@@ -42,10 +42,10 @@ module HubMerge
       gh_client.merge_pull_request(repo, pr.number)
     end
 
-    private
-
     def self.repo_from_pr(pr)
-      pr.base.repo.full_name
+      # GitHub doesn't return a full repository name in the response, only way
+      # to avoid an extra API call is to parse the `repository_url` string
+      pr.repository_url.sub("https://api.github.com/repos/", "")
     end
 
     def self.with_retries(n_tries, delay)

@@ -22,7 +22,13 @@ module HubMerge
           short_switch: "-y",
           long_switch: "--yes",
           type: :flag,
-          description: "Merge without confirmation from user (default: false)",
+          description: "Merge without confirmation from user (default: false)"
+        },
+        approve_before_merge: {
+          short_switch: "-a",
+          long_switch: "--approve",
+          type: :flag,
+          description: "Approve PR before merge (default: false)"
         },
       }
     end

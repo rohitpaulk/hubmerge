@@ -40,14 +40,14 @@ module HubMerge
         @prompts.say("No pull requests selected, aborting")
         return 1
       else
-        merge_pull_requests(prs_to_merge)
+        merge_pull_requests(prs_to_merge, opts)
         return 0
       end
     end
 
     private
 
-    def merge_pull_requests(prs_to_merge)
+    def merge_pull_requests(prs_to_merge, opts)
       total = prs_to_merge.count
       prs_to_merge.each_with_index do |pr, index|
         mergeable = false
@@ -64,8 +64,10 @@ module HubMerge
 
           next unless mergeable
 
-          @spinner.with_child("[:spinner] Approving") do
-            @merger.approve_if_not_approved(github_client, pr)
+          if opts[:approve_before_merge]
+            @spinner.with_child("[:spinner] Approving") do
+              @merger.approve_if_not_approved(github_client, pr)
+            end
           end
 
           @spinner.with_child("[:spinner] Merging") do

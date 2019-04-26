@@ -17,4 +17,16 @@ class OptionsTest < Minitest::Test
     assert_equal 1, parsed.count
     assert_equal "rails/rails", parsed[:repo]
   end
+
+  def test_parse_flags
+    parsed = HubMerge::Options.parse(["--approve"])
+    assert_equal 1, parsed.count
+    assert_equal parsed[:approve_before_merge], true
+  end
+
+  def test_parse_flags_2
+    parsed = HubMerge::Options.parse(["-y"])
+    assert_equal 1, parsed.count
+    assert_equal parsed[:merge_without_confirmation], true
+  end
 end

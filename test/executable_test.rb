@@ -117,12 +117,24 @@ class ExecutableTest < Minitest::Test
   def test_selected_prs_no_confirm
     exit_code = run_exe(["-r", "rails/rails", "-q", "in:title hey", "-y"])
     assert_equal 0, exit_code
-    assert_equal 3, @fake_merger.calls.count
+    assert_equal 2, @fake_merger.calls.count
   end
 
   def test_selected_prs_confirm
     exit_code = run_exe(
       ["-r", "rails/rails", "-q", "in:title hey"],
+      prompt_answers: {
+        pull_requests_to_merge: [FakePR.new("repo", "number")],
+      }
+    )
+    assert_equal 0, exit_code
+    # Mergeability, Merge
+    assert_equal 2, @fake_merger.calls.count
+  end
+
+  def test_with_approval
+    exit_code = run_exe(
+      ["-r", "rails/rails", "-q", "in:title hey", "--approve"],
       prompt_answers: {
         pull_requests_to_merge: [FakePR.new("repo", "number")],
       }
@@ -141,8 +153,8 @@ class ExecutableTest < Minitest::Test
       ])
     )
     assert_equal 0, exit_code
-    # 2 x (Mergeability, Approve, Merge)
-    assert_equal 6, @fake_merger.calls.count
+    # 2 x (Mergeability, Merge)
+    assert_equal 4, @fake_merger.calls.count
   end
 
   private

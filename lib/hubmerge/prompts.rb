@@ -26,7 +26,7 @@ module HubMerge
     def self.pull_requests_to_merge(pull_requests)
       choices = pull_requests.map { |pr|
         {
-          name: "##{pr.number} - #{pr.title}",
+          name: "#{self.repo_from_pr(pr)}##{pr.number} - #{pr.title}",
           value: pr,
         }
       }
@@ -38,6 +38,12 @@ module HubMerge
         per_page: 20,
         filter: true
       )
+    end
+
+    def self.repo_from_pr(pr)
+      # GitHub doesn't return a full repository name in the response, only way
+      # to avoid an extra API call is to parse the `repository_url` string
+      pr.repository_url.sub("https://api.github.com/repos/", "")
     end
 
     def self.say(text)

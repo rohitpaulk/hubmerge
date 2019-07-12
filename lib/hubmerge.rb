@@ -56,7 +56,7 @@ module HubMerge
             begin
               @merger.check_mergeability(github_client, pr)
             rescue UnmergeableError => e
-              raise SpinnerError("(Mergability: #{e})")
+              raise SpinnerError.new("(Mergability: #{e})")
             end
 
             true

@@ -98,6 +98,10 @@ class FakePR
     @repo = repo
     @number = number
   end
+
+  def repository_url
+    "https://api.github.com/repos/Shuttl-Tech/monorepo"
+  end
 end
 
 class ExecutableTest < Minitest::Test

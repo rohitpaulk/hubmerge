@@ -56,7 +56,7 @@ module HubMerge
       total = prs_to_merge.count
       prs_to_merge.each_with_index do |pr, index|
         mergeable = false
-        @spinner.with_parent("[:spinner] PR ##{pr.number} (#{index + 1}/#{total})") do
+        @spinner.with_parent("[:spinner] PR #{repo_from_pr(pr)}##{pr.number} (#{index + 1}/#{total})") do
           mergeable = @spinner.with_child("[:spinner] Checking mergeability") {
             begin
               @merger.check_mergeability(github_client, pr)
@@ -110,6 +110,12 @@ module HubMerge
 
     def github_client
       @github_client ||= Octokit::Client.new(access_token: @github_token)
+    end
+
+    def repo_from_pr(pr)
+      # GitHub doesn't return a full repository name in the response, only way
+      # to avoid an extra API call is to parse the `repository_url` string
+      pr.repository_url.sub("https://api.github.com/repos/", "")
     end
   end
 end

@@ -27,7 +27,7 @@ module HubMerge
 
       with_retries(MERGEABILITY_RETRY_COUNT, MERGEABILITY_RETRY_DELAY) do
         pr = gh_client.pull_request(repo, pr.number)
-        if pr.mergeable
+        if pr.mergeable_state == "clean"
           return true
         elsif pr.mergeable_state == "unknown"
           raise RetryError

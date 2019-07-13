@@ -32,6 +32,7 @@ module HubMerge
       result
     rescue SpinnerError => e
       spinner.error(e.to_s)
+      result
     end
 
     def ensure_active_parent!

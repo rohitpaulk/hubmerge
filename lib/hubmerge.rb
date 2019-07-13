@@ -23,6 +23,10 @@ module HubMerge
       check_or_prompt_github_token(env)
       opts = Options.parse(argv)
 
+      if opts[:show_version]
+        return 0
+      end
+
       query = check_or_prompt_search_query(opts)
       prs = search_pull_requests(query)
       if prs.empty?

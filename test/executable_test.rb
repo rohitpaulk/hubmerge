@@ -20,12 +20,33 @@ end
 
 class FakeMerger
   attr_reader :calls
-  [:approve_if_not_approved, :check_mergeability, :merge].each do |key|
-    define_method(key) do |*args|
-      @calls ||= []
-      @calls << key
+
+  def initialize
+    @calls = []
+    @throw_mergeability_error = false
+  end
+
+  def _throw_mergability_error=(opt)
+    @throw_mergeability_error = opt
+  end
+
+  def approve_if_not_approved(*args)
+    calls << :approve_if_not_approved
+    true
+  end
+
+  def check_mergeability(*args)
+    calls << :check_mergeability
+    if @throw_mergeability_error
+      raise HubMerge::UnmergeableError
+    else
       true
     end
+  end
+
+  def merge(*args)
+    calls << :merge
+    true
   end
 end
 
@@ -80,10 +101,13 @@ class FakePR
 end
 
 class ExecutableTest < Minitest::Test
-  def test_no_github_token
-    completed = run_exe(["--repo", "rails/rails"], env: {})
-    refute completed
-    assert_prompt(:github_token)
+  def setup
+    @fake_merger = FakeMerger.new
+  end
+
+  def test_show_version
+    exit_code = run_exe(["--version"])
+    assert exit_code
   end
 
   def test_no_repo
@@ -132,6 +156,19 @@ class ExecutableTest < Minitest::Test
     assert_equal 2, @fake_merger.calls.count
   end
 
+  def test_mergebility_failure
+    @fake_merger._throw_mergability_error = true
+    exit_code = run_exe(
+      ["-r", "rails/rails", "-q", "in:title hey"],
+      prompt_answers: {
+        pull_requests_to_merge: [FakePR.new("repo", "number")],
+      }
+    )
+    assert_equal 0, exit_code
+    # Mergeability
+    assert_equal 1, @fake_merger.calls.count
+  end
+
   def test_with_approval
     exit_code = run_exe(
       ["-r", "rails/rails", "-q", "in:title hey", "--approve"],
@@ -168,8 +205,8 @@ class ExecutableTest < Minitest::Test
     if github_client.nil?
       github_client = FakeGithubClient.new([FakePR.new("test", "123")])
     end
+
     @fake_prompts = FakePrompts.new(prompt_answers)
-    @fake_merger = FakeMerger.new
     HubMerge::Executable.new(
       prompts: @fake_prompts,
       github_client: github_client,

@@ -24,11 +24,19 @@ module HubMerge
           type: :flag,
           description: "Merge without confirmation from user (default: false)"
         },
+
         approve_before_merge: {
           short_switch: "-a",
           long_switch: "--approve",
           type: :flag,
           description: "Approve PR before merge (default: false)"
+        },
+
+        show_version: {
+          short_switch: "-v",
+          long_switch: "--version",
+          type: :flag,
+          description: "Show a version and exit (default: false)"
         },
       }
     end

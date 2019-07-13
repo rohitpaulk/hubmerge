@@ -55,11 +55,11 @@ module HubMerge
           mergeable = @spinner.with_child("[:spinner] Checking mergeability") {
             begin
               @merger.check_mergeability(github_client, pr)
+              next true
             rescue UnmergeableError => e
               raise SpinnerError.new("(Mergability: #{e})")
+              next false
             end
-
-            true
           }
 
           next unless mergeable

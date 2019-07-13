@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    hubmerge (0.0.9)
+    hubmerge (0.0.10)
       octokit (~> 4.0)
       tty-prompt (~> 0.18)
       tty-spinner (~> 0.9)

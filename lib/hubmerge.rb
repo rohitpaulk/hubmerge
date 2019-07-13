@@ -24,6 +24,7 @@ module HubMerge
       opts = Options.parse(argv)
 
       if opts[:show_version]
+        @prompts.say(HubMerge::VERSION)
         return 0
       end
 

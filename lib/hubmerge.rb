@@ -57,6 +57,12 @@ module HubMerge
       prs_to_merge.each_with_index do |pr, index|
         mergeable = false
         @spinner.with_parent("[:spinner] PR #{repo_from_pr(pr)}##{pr.number} (#{index + 1}/#{total})") do
+          if opts[:approve_before_merge]
+            @spinner.with_child("[:spinner] Approving") do
+              @merger.approve_if_not_approved(github_client, pr)
+            end
+          end
+
           mergeable = @spinner.with_child("[:spinner] Checking mergeability") {
             begin
               @merger.check_mergeability(github_client, pr)
@@ -68,12 +74,6 @@ module HubMerge
           }
 
           next unless mergeable
-
-          if opts[:approve_before_merge]
-            @spinner.with_child("[:spinner] Approving") do
-              @merger.approve_if_not_approved(github_client, pr)
-            end
-          end
 
           @spinner.with_child("[:spinner] Merging") do
             @merger.merge(github_client, pr)

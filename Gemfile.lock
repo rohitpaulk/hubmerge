@@ -24,7 +24,7 @@ GEM
       equatable (~> 0.6)
       tty-color (~> 0.5)
     public_suffix (4.0.6)
-    rake (10.5.0)
+    rake (13.0.6)
     sawyer (0.8.2)
       addressable (>= 2.3.5)
       faraday (> 0.8, < 2.0)
@@ -50,7 +50,7 @@ DEPENDENCIES
   bundler (~> 2.1)
   hubmerge!
   minitest (~> 5.0)
-  rake (~> 10.0)
+  rake (~> 13.0)
 
 BUNDLED WITH
    2.1.4
